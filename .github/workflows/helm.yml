@@ -1,0 +1,94 @@
+name: Helm Charts
+
+"on":
+  pull_request:
+    branches: ['main']
+  push:
+    branches: ['main']
+
+env:
+  # used by azure/setup-helm
+  HELM_VERSION: "v3.10.2"
+
+  # used by actions/setup-python
+  PYTHON_VERSION: "3.10"
+
+jobs:
+
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # https://github.com/Azure/setup-helm
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      # https://github.com/actions/setup-python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          check-latest: true
+
+      # https://github.com/helm/chart-testing-action
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          #!/bin/sh
+          set -eux
+          changed=$(ct list-changed --target-branch "main")
+          if [ -n "$changed" ]; then
+            echo "changed=true" | tee -a "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run chart-testing (lint)
+        run: ct lint --target-branch "main"
+
+      # https://github.com/helm/kind-action
+      - name: Set up a Kubernetes-in-Docker cluster
+        if: steps.list-changed.outputs.changed == 'true'
+        uses: helm/kind-action@v1
+
+      - name: Run chart-testing (install)
+        if: steps.list-changed.outputs.changed == 'true'
+        run: ct install
+
+  release:
+    if: github.event_name == 'push'
+    needs: lint-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      # https://github.com/Azure/setup-helm
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      # https://github.com/helm/chart-releaser-action
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

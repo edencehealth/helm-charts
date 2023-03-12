@@ -1,0 +1,40 @@
+name: Infra
+
+"on":
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # https://hub.docker.com/r/backplane/yamllint
+      - name: yamllint (.github)
+        run: >-
+          docker run
+          --rm
+          --volume "$(pwd):/work"
+          backplane/yamllint
+          -f github
+          .github
+
+      # https://github.com/rhysd/actionlint
+      - name: actionlint
+        run: |-
+          #!/bin/sh
+          set -eux
+          docker run \
+            --rm \
+            --volume "$(pwd):/work" \
+            --workdir /work \
+            rhysd/actionlint \
+            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}%0A```%0A{{replace $err.Snippet "\\n" "%0A"}}%0A```\n{{end}}' \
+            -ignore 'SC2016:'
