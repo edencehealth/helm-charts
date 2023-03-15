@@ -5,7 +5,7 @@ description: >-
   from OHDSI Achilles and DataQualityDashboard
   by edenceHealth
 type: application
-version: 0.2.1
+version: 0.3.0
 # because this chart bundles several apps we're not using the appVersion field
 appVersion: "1.7.0"
 maintainers:
