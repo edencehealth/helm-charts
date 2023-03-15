@@ -9,6 +9,6 @@ version: 0.2.1
 # because this chart bundles several apps we're not using the appVersion field
 appVersion: "1.7.0"
 maintainers:
-  - name: edenceHealth NV
+  - name: edencehealth
     email: info@edence.health
     url: https://github.com/edencehealth/helm-charts
