@@ -1,0 +1,19 @@
+apiVersion: v1
+entries:
+  ohdsi-achilles:
+  - apiVersion: v2
+    appVersion: 1.7.0
+    created: "2023-03-15T08:47:04.879956876Z"
+    description: A deployment of Common Data Model packages from OHDSI Achilles and
+      DataQualityDashboard by edenceHealth
+    digest: b7dae731dddc405f9c3c556f36cf2c449af7891b5fdc966213664954337258d3
+    maintainers:
+    - email: info@edence.health
+      name: edenceHealth NV
+      url: https://github.com/edencehealth/helm-charts
+    name: ohdsi-achilles
+    type: application
+    urls:
+    - https://github.com/edencehealth/helm-charts/releases/download/ohdsi-achilles-0.2.0/ohdsi-achilles-0.2.0.tgz
+    version: 0.2.0
+generated: "2023-03-15T08:47:04.879961976Z"
