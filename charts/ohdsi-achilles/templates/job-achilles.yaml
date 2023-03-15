@@ -1,6 +1,6 @@
 {{- $componentName := "achilles" }}
 {{- $component := index .Values $componentName }}
-apiVersion: apps/v1
+apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "ohdsi-achilles.fullname" $ }}-{{ $componentName }}
@@ -9,10 +9,6 @@ metadata:
     {{- include "ohdsi-achilles.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $componentName }}
 spec:
-  selector:
-    matchLabels:
-      {{- include "ohdsi-achilles.selectorLabels" $ | nindent 6 }}
-      app.kubernetes.io/component: {{ $componentName }}
   template:
     metadata:
       namespace: {{ .Release.Namespace }}
@@ -35,19 +31,19 @@ spec:
         - name: {{ $componentName }}
           securityContext:
             {{- toYaml $component.securityContext | nindent 12 }}
-          image: "{{ $component.image }}"
+          image: "{{ $component.image | replace "$APP_VERSION" $.Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: {{ $component.dbSecretName }}
-                  value: username
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ $component.dbSecretName }}
-                  value: password
+                  key: password
             {{- range $key, $value := $component.env }}
             - name: {{ $key | quote }}
               value: {{ $value | quote }}

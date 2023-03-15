@@ -36,6 +36,7 @@ componentDefaults: &componentDefaults
     # readOnlyRootFilesystem: true
     # runAsNonRoot: true
     # runAsUser: 1000
+  restartPolicy: "Never"
 
 achilles:
   <<: *componentDefaults
