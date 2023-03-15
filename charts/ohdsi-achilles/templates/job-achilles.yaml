@@ -35,7 +35,7 @@ spec:
         - name: {{ $componentName }}
           securityContext:
             {{- toYaml $component.securityContext | nindent 12 }}
-          image: "{{ $component.image.repository }}:{{ $component.image.tag }}"
+          image: "{{ $component.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             - name: DB_USERNAME
