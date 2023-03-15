@@ -48,7 +48,7 @@ This command can be used to create the secret:
 ```sh
 kubectl \
   create secret generic \
-  ohdsi-k8s-db-secret \
+  ohdsi-achilles-db-secret \
   --from-literal=username='SomeUsernameYouSupply' \
   --from-literal=password='SomePasswordYouSupply'
 ```
