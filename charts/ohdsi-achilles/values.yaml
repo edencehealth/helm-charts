@@ -1,0 +1,84 @@
+# default values for ohdsi-achilles; these values are passed into the templates
+
+# dbSecretName - the name of the k8s secret that holds DB connection username
+# and password. the keys of this secret map to environment variables of the
+# container:
+# secret key name | container environment variable
+# ----------------|-------------------------------
+# username        | DATASOURCE_USERNAME
+# password        | DATASOURCE_PASSWORD
+
+componentDefaults: &componentDefaults
+  replicaCount: 1
+  env: &envDefaults
+    TZ: "Europe/Brussels"
+  nodeSelector: {}
+  tolerations: []
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  affinity: {}
+  podAnnotations: {}
+  podSecurityContext: {}
+    # fsGroup: 2000
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+achilles:
+  <<: *componentDefaults
+  image: "edence/ohdsi-achilles:v$APP_VERSION"
+  hostName: webapi.local
+  healthCheckPath: /WebAPI/info
+  # recreate the container if it is unresponsive for more than 30 seconds (periodSeconds = 10)
+  healthCheckFailureThreshold: 3
+  # this container has a slow start
+  # recreate the container if it takes more than 3.3 minutes to start (periodSeconds = 10)
+  healthCheckStartupFailureThreshold: 20
+  dbSecretName: ohdsi-achilles-db-secret
+  pvcName: achilles-output
+  env:
+    <<: *envDefaults
+    CDM_VERSION: "5.4"  # this is a patch for dqd's lack of support for "5.4.0"
+    OPTIMIZE_ATLAS_CACHE: "TRUE"
+    SOURCE_NAME: "ohdsi"
+    CDM_SCHEMA: "omopcdm"
+    VOCAB_SCHEMA: "omopcdm"
+    DB_DBMS: "postgresql"
+    DB_HOSTNAME: "127.0.0.1"
+    DB_NAME: "omopcdm"
+    DB_PORT: 5432
+    JSON_EXPORT: "TRUE"
+    DQD: "TRUE"
+    DQD_VERBOSE: "TRUE"
+    DQD_JSON_FILE: "TRUE"
+    SKIP_ACHILLES: "FALSE"
+    DQD_WEB: "FALSE"
+    OUTPUT_BASE: /output
+
+imagePullSecrets:
+imagePullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""

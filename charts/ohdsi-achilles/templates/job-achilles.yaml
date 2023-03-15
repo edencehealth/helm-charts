@@ -1,0 +1,76 @@
+{{- $componentName := "achilles" }}
+{{- $component := index .Values $componentName }}
+apiVersion: apps/v1
+kind: Job
+metadata:
+  name: {{ include "ohdsi-achilles.fullname" $ }}-{{ $componentName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ohdsi-achilles.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $componentName }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "ohdsi-achilles.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $componentName }}
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      {{- with $component.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ohdsi-achilles.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $componentName }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ohdsi-achilles.serviceAccountName" $ }}
+      securityContext:
+        {{- toYaml $component.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ $componentName }}
+          securityContext:
+            {{- toYaml $component.securityContext | nindent 12 }}
+          image: "{{ $component.image.repository }}:{{ $component.image.tag }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $component.dbSecretName }}
+                  value: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $component.dbSecretName }}
+                  value: password
+            {{- range $key, $value := $component.env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: output
+              mountPath: /output
+          resources:
+            {{- toYaml $component.resources | nindent 12 }}
+      {{- with $component.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $component.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $component.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ $component.restartPolicy }}
+      volumes:
+        - name: output
+          persistentVolumeClaim:
+            claimName: {{ $component.pvcName }}
